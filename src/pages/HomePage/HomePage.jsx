@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Map, MapMarker } from "react-kakao-maps-sdk";
+import { Map, MapMarker, useMap } from "react-kakao-maps-sdk";
 import { useQuery } from "@tanstack/react-query";
 import { styled } from "styled-components";
 import NavigationBarLayout from "../../components/NavigationBarLayout";
@@ -8,14 +8,34 @@ import LightDetailInfo from "./componenets/LightDetailInfo";
 import FavoriteInfo from "./componenets/FavoriteInfo";
 import CustomOverLay from "./componenets/CustomOverLay";
 import TopBar from "./componenets/TopBar";
-import { useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { bottomSheetOpenState } from "../../recoil/bottomSheetOpenState/atom";
 import { navigationState } from "../../recoil/navigationState/atom";
 import { fetchTraffic } from "../../apis/api/traffic";
-import locationIcon from "../..//assets/icon/location.png";
+import locationIcon from "../..//assets/icon/location.webp";
 import { roundCoordinates } from "../../utils/roundCoordinates";
+import { currentAddressState } from "../../recoil/currentAddressState/atom";
 
 const { kakao } = window;
+
+const ToSeoulButton = styled.button`
+  position: absolute;
+  top: 8%;
+  left: 16px;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+  z-index: 500;
+  font-size: 20px;
+  transition: bottom 0.5s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
 
 const Container = styled.div`
   position: relative;
@@ -57,7 +77,9 @@ const HomePage = () => {
   const [map, setMap] = useState(null);
   const [mapBounds, setMapBounds] = useState(map?.getBounds());
   const [openIndex, setOpenIndex] = useState(null);
-  const [state, setState] = useState({
+  const [currentName, setCurrentName] = useState("");
+  const setCurrentAddress = useSetRecoilState(currentAddressState);
+  const [locationState, setLocationState] = useState({
     center: {
       lat: 35.17828963,
       lng: 126.909254315,
@@ -65,7 +87,6 @@ const HomePage = () => {
     errMsg: null,
     isLoading: true,
   });
-
   const handleToggle = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
@@ -86,7 +107,7 @@ const HomePage = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setState((prev) => ({
+          setLocationState((prev) => ({
             ...prev,
             center: {
               lat: position.coords.latitude,
@@ -94,9 +115,19 @@ const HomePage = () => {
             },
             isLoading: false,
           }));
+          setCurrentAddress((prev) => ({
+            ...prev,
+            currentLat: position.coords.latitude,
+            currentLng: position.coords.longitude,
+          }));
+          const coord = new kakao.maps.LatLng(
+            position.coords.latitude,
+            position.coords.longitude
+          );
+          geocoder.coord2Address(coord.getLng(), coord.getLat(), callback);
         },
         (err) => {
-          setState((prev) => ({
+          setLocationState((prev) => ({
             ...prev,
             errMsg: err.message,
             isLoading: false,
@@ -104,7 +135,7 @@ const HomePage = () => {
         }
       );
     } else {
-      setState((prev) => ({
+      setLocationState((prev) => ({
         ...prev,
         errMsg: "geolocation을 사용할수 없음",
         isLoading: false,
@@ -124,25 +155,37 @@ const HomePage = () => {
   }, [navigationBarState]);
 
   const panTo = (point) => {
-    const lat = point.lat ? point.lat : state.center.lat;
-    const lng = point.lng ? point.lng : state.center.lng;
+    const lat = point.lat ? point.lat : locationState.center.lat;
+    const lng = point.lng ? point.lng : locationState.center.lng;
     const newLatLng = new kakao.maps.LatLng(lat, lng);
     map.panTo(newLatLng);
   };
 
+  const panToSeoul = () => {
+    const newLatLng = new kakao.maps.LatLng(37.501601, 127.025916);
+    map.panTo(newLatLng);
+  };
+
   const handleMapDragEnd = () => {
-    const newBounds = map.getBounds(); // 맵 API로부터 새로운 bounds 정보를 가져옴
+    const newBounds = map.getBounds();
     setMapBounds(newBounds);
-    surroundingDataRefetch(); // 새로운 bounds로 데이터 페칭 실행
+    surroundingDataRefetch();
+  };
+  const geocoder = new kakao.maps.services.Geocoder();
+
+  const callback = function (result, status) {
+    if (status === kakao.maps.services.Status.OK) {
+      setCurrentName(result[0].address.address_name);
+    }
   };
 
   return (
     <NavigationBarLayout>
       <Container>
-        <TopBar />
+        <TopBar currentName={currentName} />
         <Map
           id="map"
-          center={state.center}
+          center={locationState.center}
           style={{
             width: "100%",
             height: "calc(100vh - 80px)",
@@ -151,11 +194,9 @@ const HomePage = () => {
           level={3}
           minLevel={4}
           onCreate={setMap}
+          // onCenterChanged
           onDragEnd={() => {
             handleMapDragEnd();
-          }}
-          onClick={() => {
-            // setOpenIndex(null);x`
           }}
         >
           {surroundingLightInfoData?.data.data.traffics.map((data, index) => {
@@ -169,33 +210,31 @@ const HomePage = () => {
             );
           })}
           {navigationBarState === "Home" ? (
-            <>
-              <LightDetailInfo isLoggein={isLoggein} />
-            </>
+            <LightDetailInfo isLoggein={isLoggein} />
           ) : null}
           {navigationBarState === "TrafficSignal" ? (
-            <>
-              <SurroundingLightInfo
-                isLoading={isLoading}
-                surroundingLightInfoData={
-                  surroundingLightInfoData?.data.data.traffics
-                }
-                isLoggein={isLoggein}
-              />
-            </>
+            <SurroundingLightInfo
+              isLoading={isLoading}
+              surroundingLightInfoData={
+                surroundingLightInfoData?.data.data.traffics
+              }
+              isLoggein={isLoggein}
+            />
           ) : null}
           {navigationBarState === "Favorites" ? (
             <FavoriteInfo panToPoint={panTo} />
           ) : null}
           <MapMarker
-            position={state.center}
+            position={locationState.center}
             image={{ src: locationIcon, size: { width: 30, height: 30 } }}
           />
         </Map>
+        <ToSeoulButton onClick={panToSeoul}>S</ToSeoulButton>
         <PanToButton
           onClick={panTo}
           $openState={openState}
           $navigationBarState={navigationBarState}
+          aria-label="지도에서 위치로 이동"
         >
           <svg
             width="20"

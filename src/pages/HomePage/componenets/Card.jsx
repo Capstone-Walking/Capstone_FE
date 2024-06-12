@@ -5,6 +5,7 @@ import { useCountDown } from "../../../hooks/useCountDown";
 import { useState } from "react";
 import KakaoLoginModal from "./KakaoLoginModal";
 import { useHandleFavoriteTraffic } from "../../../hooks/handleFavoriteTraffic";
+import { translateDirection } from "../../../utils/translateDirection";
 
 const Contianer = styled.div`
   width: 90%;
@@ -73,13 +74,13 @@ const Circle = styled.div`
   height: 20px;
   border-radius: 50%;
   background-color: ${({ $lightColor, theme }) =>
-    $lightColor === "green" ? theme.green : theme.red};
+    $lightColor === "GREEN" ? theme.green : theme.red};
 `;
 
 const RemainingTimeText = styled.span`
   font-weight: 700;
   color: ${({ $lightColor, theme }) =>
-    $lightColor === "green" ? theme.green : theme.red};
+    $lightColor === "GREEN" ? theme.green : theme.red};
 `;
 
 const Card = ({ surroundingLightInfoData, isLoggein }) => {
@@ -111,8 +112,6 @@ const Card = ({ surroundingLightInfoData, isLoggein }) => {
     <Contianer>
       <Image src={trafficLightImage}></Image>
       <AddressText>{viewName}</AddressText>
-      <DistanceText>26m</DistanceText>
-      <DetailAddressText>176-48 (전남대공과대학 방면)</DetailAddressText>
       <IsFavoriteButton
         onClick={() => {
           isLoggein ? handleFavorite() : handleLoginModal();
@@ -134,9 +133,9 @@ const Card = ({ surroundingLightInfoData, isLoggein }) => {
       </IsFavoriteButton>
       <Lights>
         <Light>
-          <Text>서쪽</Text>
+          <Text>{translateDirection(detail.direction)}</Text>
           <RemainingTimeText $lightColor={color}>
-            {timeLeftCountDown}초
+            {timeLeftCountDown ? `${timeLeftCountDown} 초` : "정보없음"}
           </RemainingTimeText>
           <Circle $lightColor={color} />
         </Light>

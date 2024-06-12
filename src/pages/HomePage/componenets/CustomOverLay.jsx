@@ -1,7 +1,6 @@
 import { CustomOverlayMap } from "react-kakao-maps-sdk";
 import styled from "styled-components";
 import { ReactComponent as Traffic } from "../../../assets/icon/traffic.svg";
-import Text from "./Text";
 import { useSetRecoilState } from "recoil";
 import { bottomSheetOpenState } from "../../../recoil/bottomSheetOpenState/atom";
 import { navigationState } from "../../../recoil/navigationState/atom";
@@ -19,6 +18,7 @@ const Box = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 10px;
 `;
 
 const ImageBox = styled.div`
@@ -29,14 +29,17 @@ const ImageBox = styled.div`
 `;
 
 const TextBox = styled.div`
-  width: 60%;
+  width: 100px;
+  height: 80px;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: 16px;
+  font-weight: 600;
 `;
 
 const CustomOverLay = ({ surroundingLightInfoData, isOpen, onToggle }) => {
-  const { id, isFavorite, point, viewName } = surroundingLightInfoData;
+  const { id, point, viewName } = surroundingLightInfoData;
   const setDetailInfoOpenState = useSetRecoilState(bottomSheetOpenState);
   const setCurrentNavigationState = useSetRecoilState(navigationState);
 
@@ -111,11 +114,7 @@ const CustomOverLay = ({ surroundingLightInfoData, isOpen, onToggle }) => {
                 <ImageBox>
                   <Traffic />
                 </ImageBox>
-                <TextBox>
-                  <Text $fontSize="16px" $fontWeight="600">
-                    {viewName}
-                  </Text>
-                </TextBox>
+                <TextBox>{viewName}</TextBox>
               </Box>
             </button>
           </Container>

@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import LocationIcon from "../../../assets/icon/locationIcon.webp";
 import TrafficIcon from "../../../assets/icon/trafficIcon.webp";
 import RouteIcon from "../../../assets/icon/routeIcon.webp";
 import EditUserButton from "../../../assets/icon/editUserButton.webp";
@@ -87,7 +86,7 @@ const FavoriteContainer = styled.div`
 const Title = styled.p`
   font-size: 18px;
   font-weight: bold;
-  padding-left: 15px;
+  padding-left: 6%;
   margin-top: 25px;
 `;
 
@@ -157,6 +156,10 @@ const EditText = styled.p`
   text-align: center;
 `;
 
+const WaitText = styled.p`
+  text-align: center;
+`;
+
 const UserPage = () => {
   const setUserInfo = useSetRecoilState(userInformationState);
   const setNavigationState = useSetRecoilState(navigationState);
@@ -200,7 +203,7 @@ const UserPage = () => {
     <Container>
       <UserContainer>
         {isLoading ? (
-          <>회원 정보 불러오는 중 </>
+          <WaitText>회원 정보 불러오는 중... </WaitText>
         ) : (
           <>
             <UserProfile>
@@ -220,16 +223,6 @@ const UserPage = () => {
       <FavoriteContainer>
         <Title>즐겨찾기</Title>
         <FavoriteButton>
-          {/* <StyledLink to="/mypage/favoriteslocation">
-            <IconBox>
-              <Icon
-                src={LocationIcon}
-                alt="location icon"
-                style={{ width: 22 }}
-              />
-            </IconBox>
-            <Text>장소</Text>
-          </StyledLink> */}
           <StyledLink to="/mypage/favoritestraffic">
             <IconBox>
               <Icon src={TrafficIcon} alt="TrafficIcon" style={{ width: 19 }} />
