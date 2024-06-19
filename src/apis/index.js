@@ -77,14 +77,21 @@ memberInstance.interceptors.response.use(
   }
 );
 
-export const profileInstance = axios.create({
-  baseURL: process.env.REACT_APP_BASE_URL + "/members/profile",
-  timeout: 2000,
-  headers: {
-    "Content-Type": "multipart/form-data",
-  },
-  withCredentials: true,
-});
+export const profileInstance = () => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    throw new Error("Token is not exist");
+  }
+  return axios.create({
+    baseURL: process.env.REACT_APP_BASE_URL + "/members/profile",
+    timeout: 2000,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      "Authorization": "Bearer " + token,
+    },
+    withCredentials: true,
+  });
+};
 
 profileInstance.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
